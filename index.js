@@ -14,9 +14,18 @@ const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || 'moderate_ustaz_secret_key_2024';
 
 // MongoDB connection
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('MongoDB connected'))
-  .catch(err => console.error('MongoDB connection error:', err));
+mongoose.connect(process.env.MONGODB_URI, {
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+})
+  .then(() => {
+    console.log('MongoDB connected');
+    seedProducts();
+  })
+  .catch(err => {
+    console.error('MongoDB connection error:', err);
+    console.log('Server running without database connection');
+  });
 
 // Cloudinary configuration
 cloudinary.config({
@@ -64,6 +73,10 @@ const authenticateToken = (req, res, next) => {
 // Seed initial products if database is empty
 const seedProducts = async () => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      console.log('Database not connected, skipping seeding');
+      return;
+    }
     const count = await Product.countDocuments();
     if (count === 0) {
       const initialProducts = [
@@ -81,8 +94,6 @@ const seedProducts = async () => {
     console.error('Error seeding products:', error);
   }
 };
-
-seedProducts();
 
 // Admin login
 app.post('/api/admin/login', async (req, res) => {
