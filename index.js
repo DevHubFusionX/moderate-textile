@@ -51,8 +51,8 @@ app.use(express.json());
 
 // Admin user (in production, store in database)
 const adminUser = {
-  email: 'admin@moderateustaz.com',
-  password: bcrypt.hashSync('admin123', 10)
+  email: process.env.ADMIN_EMAIL || 'admin@moderateustaz.com',
+  password: bcrypt.hashSync(process.env.ADMIN_PASSWORD || 'MU2024@Admin!', 10)
 };
 
 // Auth middleware
@@ -288,6 +288,19 @@ app.delete('/api/admin/combos/:id', authenticateToken, async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete combo' });
   }
+});
+
+// Change password
+app.post('/api/admin/change-password', authenticateToken, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  
+  const validPassword = await bcrypt.compare(currentPassword, adminUser.password);
+  if (!validPassword) {
+    return res.status(401).json({ error: 'Current password is incorrect' });
+  }
+  
+  adminUser.password = bcrypt.hashSync(newPassword, 10);
+  res.json({ message: 'Password changed successfully' });
 });
 
 // Verify token
