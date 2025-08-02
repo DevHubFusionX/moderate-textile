@@ -303,6 +303,19 @@ app.post('/api/admin/change-password', authenticateToken, async (req, res) => {
   res.json({ message: 'Password changed successfully' });
 });
 
+// Change email
+app.post('/api/admin/change-email', authenticateToken, async (req, res) => {
+  const { currentPassword, newEmail } = req.body;
+  
+  const validPassword = await bcrypt.compare(currentPassword, adminUser.password);
+  if (!validPassword) {
+    return res.status(401).json({ error: 'Current password is incorrect' });
+  }
+  
+  adminUser.email = newEmail;
+  res.json({ message: 'Email changed successfully' });
+});
+
 // Verify token
 app.get('/api/admin/verify', authenticateToken, (req, res) => {
   res.json({ valid: true, user: req.user });
