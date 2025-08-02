@@ -52,7 +52,7 @@ app.use(express.json());
 // Admin user (in production, store in database)
 const adminUser = {
   email: process.env.ADMIN_EMAIL || 'admin@moderateustaz.com',
-  password: bcrypt.hashSync(process.env.ADMIN_PASSWORD || 'MU2024@Admin!', 10)
+  password: bcrypt.hashSync(process.env.ADMIN_PASSWORD || 'admin123', 10)
 };
 
 // Auth middleware
