@@ -8,6 +8,7 @@ const mongoose = require('mongoose');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const Product = require('./models/Product');
+const Combo = require('./models/Combo');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -194,6 +195,98 @@ app.delete('/api/admin/products/:id', authenticateToken, async (req, res) => {
     res.json({ message: 'Product deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete product' });
+  }
+});
+
+// Get all combos (public)
+app.get('/api/combos', async (req, res) => {
+  try {
+    const combos = await Combo.find().populate('products').sort({ createdAt: -1 });
+    res.json(combos);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch combos' });
+  }
+});
+
+// Add new combo (protected)
+app.post('/api/admin/combos', authenticateToken, upload.single('image'), async (req, res) => {
+  try {
+    const { name, description, products, originalPrice, comboPrice, savings, popular } = req.body;
+    const newCombo = new Combo({
+      name,
+      description,
+      products: JSON.parse(products),
+      originalPrice,
+      comboPrice,
+      savings,
+      image: req.file ? req.file.path : 'https://via.placeholder.com/400x400',
+      cloudinaryId: req.file ? req.file.public_id : null,
+      popular: popular === 'true'
+    });
+    
+    const savedCombo = await newCombo.save();
+    const populatedCombo = await Combo.findById(savedCombo._id).populate('products');
+    res.json(populatedCombo);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create combo' });
+  }
+});
+
+// Update combo (protected)
+app.put('/api/admin/combos/:id', authenticateToken, upload.single('image'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description, products, originalPrice, comboPrice, savings, popular } = req.body;
+    
+    const combo = await Combo.findById(id);
+    if (!combo) {
+      return res.status(404).json({ error: 'Combo not found' });
+    }
+    
+    if (req.file && combo.cloudinaryId) {
+      await cloudinary.uploader.destroy(combo.cloudinaryId);
+    }
+    
+    const updatedCombo = await Combo.findByIdAndUpdate(
+      id,
+      {
+        name: name || combo.name,
+        description: description || combo.description,
+        products: products ? JSON.parse(products) : combo.products,
+        originalPrice: originalPrice || combo.originalPrice,
+        comboPrice: comboPrice || combo.comboPrice,
+        savings: savings || combo.savings,
+        image: req.file ? req.file.path : combo.image,
+        cloudinaryId: req.file ? req.file.public_id : combo.cloudinaryId,
+        popular: popular !== undefined ? popular === 'true' : combo.popular
+      },
+      { new: true }
+    ).populate('products');
+    
+    res.json(updatedCombo);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update combo' });
+  }
+});
+
+// Delete combo (protected)
+app.delete('/api/admin/combos/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const combo = await Combo.findById(id);
+    
+    if (!combo) {
+      return res.status(404).json({ error: 'Combo not found' });
+    }
+    
+    if (combo.cloudinaryId) {
+      await cloudinary.uploader.destroy(combo.cloudinaryId);
+    }
+    
+    await Combo.findByIdAndDelete(id);
+    res.json({ message: 'Combo deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete combo' });
   }
 });
 
