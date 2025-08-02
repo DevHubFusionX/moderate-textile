@@ -1,9 +1,9 @@
 services:
   - type: web
     name: moderate-ustaz-backend
-    env: node
-    buildCommand: npm install
-    startCommand: npm start
+    runtime: node
+    buildCommand: npm ci
+    startCommand: node index.js
     envVars:
       - key: NODE_ENV
         value: production
