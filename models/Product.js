@@ -13,15 +13,45 @@ const productSchema = new mongoose.Schema({
   category: {
     type: String,
     required: true,
-    enum: ['Traditional', 'Casual', 'Premium', 'Accessories']
+    enum: ['Traditional', 'Casual', 'Premium', 'Fabrics', 'Accessories']
+  },
+  description: {
+    type: String,
+    trim: true
   },
   image: {
     type: String,
     required: true
   },
+  images: [{
+    type: String
+  }],
+  colors: [{
+    name: String,
+    images: [String]
+  }],
+  fabricType: {
+    type: String,
+    trim: true
+  },
+  texture: {
+    type: String,
+    trim: true
+  },
+  quality: {
+    type: String,
+    trim: true
+  },
+  care: {
+    type: String,
+    trim: true
+  },
   cloudinaryId: {
     type: String
-  }
+  },
+  cloudinaryIds: [{
+    type: String
+  }]
 }, {
   timestamps: true
 });
