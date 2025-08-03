@@ -81,15 +81,99 @@ const seedProducts = async () => {
     const count = await Product.countDocuments();
     if (count === 0) {
       const initialProducts = [
-        { name: "3-Piece Senator", price: "₦15,000", category: "Traditional", image: "https://via.placeholder.com/400x400" },
-        { name: "Traditional Kaftan", price: "₦12,000", category: "Traditional", image: "https://via.placeholder.com/400x400" },
-        { name: "Embroidered Cap", price: "₦5,000", category: "Accessories", image: "https://via.placeholder.com/400x400" },
-        { name: "Premium Agbada", price: "₦25,000", category: "Traditional", image: "https://via.placeholder.com/400x400" },
-        { name: "Daily Jalabiya", price: "₦18,000", category: "Casual", image: "https://via.placeholder.com/400x400" },
-        { name: "Designer Kaftan", price: "₦20,000", category: "Premium", image: "https://via.placeholder.com/400x400" }
+        {
+          name: "Premium Cotton Kaftan",
+          price: "₦18,000",
+          category: "Traditional",
+          description: "Elegant traditional kaftan made from premium cotton fabric. Perfect for formal occasions and daily wear.",
+          fabricType: "100% Cotton",
+          texture: "Smooth and breathable",
+          quality: "Premium",
+          care: "Machine wash cold, hang dry",
+          image: "https://res.cloudinary.com/dyfi4enfl/image/upload/v1/moderate_ustaz_products/kaftan1",
+          images: [
+            "https://res.cloudinary.com/dyfi4enfl/image/upload/v1/moderate_ustaz_products/kaftan1",
+            "https://res.cloudinary.com/dyfi4enfl/image/upload/v1/moderate_ustaz_products/kaftan2"
+          ]
+        },
+        {
+          name: "Embroidered Agbada Set",
+          price: "₦35,000",
+          category: "Premium",
+          description: "Luxurious hand-embroidered Agbada with matching cap and trousers. Crafted for special occasions.",
+          fabricType: "Silk blend",
+          texture: "Smooth with intricate embroidery",
+          quality: "Luxury",
+          care: "Dry clean only",
+          image: "https://res.cloudinary.com/dyfi4enfl/image/upload/v1/moderate_ustaz_products/agbada1",
+          images: [
+            "https://res.cloudinary.com/dyfi4enfl/image/upload/v1/moderate_ustaz_products/agbada1",
+            "https://res.cloudinary.com/dyfi4enfl/image/upload/v1/moderate_ustaz_products/agbada2"
+          ]
+        },
+        {
+          name: "Ankara Print Fabric",
+          price: "₦8,500",
+          category: "Fabrics",
+          description: "Vibrant Ankara print fabric, 6 yards. High-quality wax print perfect for traditional and modern designs.",
+          fabricType: "Cotton wax print",
+          texture: "Smooth with vibrant colors",
+          quality: "Standard",
+          care: "Machine wash warm, iron on medium heat",
+          image: "https://res.cloudinary.com/dyfi4enfl/image/upload/v1/moderate_ustaz_products/ankara1",
+          images: [
+            "https://res.cloudinary.com/dyfi4enfl/image/upload/v1/moderate_ustaz_products/ankara1",
+            "https://res.cloudinary.com/dyfi4enfl/image/upload/v1/moderate_ustaz_products/ankara2"
+          ]
+        },
+        {
+          name: "Traditional Cap (Fila)",
+          price: "₦6,500",
+          category: "Accessories",
+          description: "Handwoven traditional cap available in multiple colors. Perfect complement to traditional wear.",
+          fabricType: "Cotton blend",
+          texture: "Woven with traditional patterns",
+          quality: "Standard",
+          care: "Hand wash gently, air dry",
+          image: "https://res.cloudinary.com/dyfi4enfl/image/upload/v1/moderate_ustaz_products/cap1",
+          images: [
+            "https://res.cloudinary.com/dyfi4enfl/image/upload/v1/moderate_ustaz_products/cap1",
+            "https://res.cloudinary.com/dyfi4enfl/image/upload/v1/moderate_ustaz_products/cap2"
+          ]
+        },
+        {
+          name: "Casual Jalabiya",
+          price: "₦15,000",
+          category: "Casual",
+          description: "Comfortable daily wear jalabiya in soft cotton. Ideal for prayers and casual outings.",
+          fabricType: "Cotton",
+          texture: "Soft and comfortable",
+          quality: "Standard",
+          care: "Machine wash cold, tumble dry low",
+          image: "https://res.cloudinary.com/dyfi4enfl/image/upload/v1/moderate_ustaz_products/jalabiya1",
+          images: [
+            "https://res.cloudinary.com/dyfi4enfl/image/upload/v1/moderate_ustaz_products/jalabiya1",
+            "https://res.cloudinary.com/dyfi4enfl/image/upload/v1/moderate_ustaz_products/jalabiya2"
+          ]
+        },
+        {
+          name: "Senator Suit Set",
+          price: "₦28,000",
+          category: "Traditional",
+          description: "Complete 3-piece senator suit with embroidered details. Includes top, trousers, and cap.",
+          fabricType: "Cotton blend",
+          texture: "Smooth with embroidered accents",
+          quality: "Premium",
+          care: "Dry clean recommended",
+          image: "https://res.cloudinary.com/dyfi4enfl/image/upload/v1/moderate_ustaz_products/senator1",
+          images: [
+            "https://res.cloudinary.com/dyfi4enfl/image/upload/v1/moderate_ustaz_products/senator1",
+            "https://res.cloudinary.com/dyfi4enfl/image/upload/v1/moderate_ustaz_products/senator2"
+          ]
+        }
       ];
       await Product.insertMany(initialProducts);
-      console.log('Initial products seeded');
+      console.log('Initial products seeded with detailed information');
     }
   } catch (error) {
     console.error('Error seeding products:', error);
@@ -137,15 +221,31 @@ app.get('/api/products/:id', async (req, res) => {
 });
 
 // Add new product (protected)
-app.post('/api/admin/products', authenticateToken, upload.single('image'), async (req, res) => {
+app.post('/api/admin/products', authenticateToken, upload.array('images', 10), async (req, res) => {
   try {
-    const { name, price, category } = req.body;
+    const { name, price, category, description, fabricType, texture, quality, care } = req.body;
+    
+    const images = req.files && req.files.length > 0 
+      ? req.files.map(file => file.path)
+      : ['https://via.placeholder.com/400x400'];
+    
+    const cloudinaryIds = req.files && req.files.length > 0
+      ? req.files.map(file => file.public_id)
+      : [];
+    
     const newProduct = new Product({
       name,
       price,
       category,
-      image: req.file ? req.file.path : 'https://via.placeholder.com/400x400',
-      cloudinaryId: req.file ? req.file.public_id : null
+      description,
+      fabricType,
+      texture,
+      quality,
+      care,
+      image: images[0],
+      images,
+      cloudinaryId: cloudinaryIds[0] || null,
+      cloudinaryIds
     });
     
     const savedProduct = await newProduct.save();
@@ -156,33 +256,46 @@ app.post('/api/admin/products', authenticateToken, upload.single('image'), async
 });
 
 // Update product (protected)
-app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), async (req, res) => {
+app.put('/api/admin/products/:id', authenticateToken, upload.array('images', 10), async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, price, category } = req.body;
+    const { name, price, category, description, fabricType, texture, quality, care } = req.body;
     
     const product = await Product.findById(id);
     if (!product) {
       return res.status(404).json({ error: 'Product not found' });
     }
     
-    // Delete old image from cloudinary if new image is uploaded
-    if (req.file && product.cloudinaryId) {
-      await cloudinary.uploader.destroy(product.cloudinaryId);
+    let updateData = {
+      name: name || product.name,
+      price: price || product.price,
+      category: category || product.category,
+      description: description || product.description,
+      fabricType: fabricType || product.fabricType,
+      texture: texture || product.texture,
+      quality: quality || product.quality,
+      care: care || product.care
+    };
+    
+    // Handle new images if uploaded
+    if (req.files && req.files.length > 0) {
+      // Delete old images from cloudinary
+      if (product.cloudinaryIds && product.cloudinaryIds.length > 0) {
+        for (const id of product.cloudinaryIds) {
+          await cloudinary.uploader.destroy(id);
+        }
+      }
+      
+      const newImages = req.files.map(file => file.path);
+      const newCloudinaryIds = req.files.map(file => file.public_id);
+      
+      updateData.image = newImages[0];
+      updateData.images = newImages;
+      updateData.cloudinaryId = newCloudinaryIds[0];
+      updateData.cloudinaryIds = newCloudinaryIds;
     }
     
-    const updatedProduct = await Product.findByIdAndUpdate(
-      id,
-      {
-        name: name || product.name,
-        price: price || product.price,
-        category: category || product.category,
-        image: req.file ? req.file.path : product.image,
-        cloudinaryId: req.file ? req.file.public_id : product.cloudinaryId
-      },
-      { new: true }
-    );
-    
+    const updatedProduct = await Product.findByIdAndUpdate(id, updateData, { new: true });
     res.json(updatedProduct);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update product' });
@@ -199,8 +312,12 @@ app.delete('/api/admin/products/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Product not found' });
     }
     
-    // Delete image from cloudinary
-    if (product.cloudinaryId) {
+    // Delete all images from cloudinary
+    if (product.cloudinaryIds && product.cloudinaryIds.length > 0) {
+      for (const cloudinaryId of product.cloudinaryIds) {
+        await cloudinary.uploader.destroy(cloudinaryId);
+      }
+    } else if (product.cloudinaryId) {
       await cloudinary.uploader.destroy(product.cloudinaryId);
     }
     
