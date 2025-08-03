@@ -312,18 +312,25 @@ app.delete('/api/admin/products/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Product not found' });
     }
     
-    // Delete all images from cloudinary
-    if (product.cloudinaryIds && product.cloudinaryIds.length > 0) {
-      for (const cloudinaryId of product.cloudinaryIds) {
-        await cloudinary.uploader.destroy(cloudinaryId);
+    // Delete all images from cloudinary (ignore errors)
+    try {
+      if (product.cloudinaryIds && product.cloudinaryIds.length > 0) {
+        for (const cloudinaryId of product.cloudinaryIds) {
+          if (cloudinaryId) {
+            await cloudinary.uploader.destroy(cloudinaryId);
+          }
+        }
+      } else if (product.cloudinaryId) {
+        await cloudinary.uploader.destroy(product.cloudinaryId);
       }
-    } else if (product.cloudinaryId) {
-      await cloudinary.uploader.destroy(product.cloudinaryId);
+    } catch (cloudinaryError) {
+      console.log('Cloudinary deletion error (ignored):', cloudinaryError);
     }
     
     await Product.findByIdAndDelete(id);
     res.json({ message: 'Product deleted successfully' });
   } catch (error) {
+    console.error('Delete product error:', error);
     res.status(500).json({ error: 'Failed to delete product' });
   }
 });
