@@ -47,7 +47,7 @@ const storage = new CloudinaryStorage({
 const upload = multer({ storage });
 
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://moderate-textile.vercel.app'],
+  origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
