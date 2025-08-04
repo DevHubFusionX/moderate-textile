@@ -59,6 +59,7 @@ const adminUser = {
   email: process.env.ADMIN_EMAIL || 'admin@moderateustaz.com',
   password: bcrypt.hashSync(process.env.ADMIN_PASSWORD || 'admin123', 10)
 };
+// fixed
 
 // Auth middleware
 const authenticateToken = (req, res, next) => {
