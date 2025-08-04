@@ -15,7 +15,12 @@ const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || 'moderate_ustaz_secret_key_2024';
 
 // MongoDB connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://fanyanwu83:2gzYARFKvDE8DBvR@cluster0.nvozb5i.mongodb.net/moderate_ustaz?retryWrites=true&w=majority&appName=Cluster0';
+let MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://fanyanwu83:2gzYARFKvDE8DBvR@cluster0.nvozb5i.mongodb.net/moderate_ustaz?retryWrites=true&w=majority&appName=Cluster0';
+
+// Clean the URI in case it includes the variable name
+if (MONGODB_URI.startsWith('MONGODB_URI=')) {
+  MONGODB_URI = MONGODB_URI.replace('MONGODB_URI=', '');
+}
 
 console.log('Environment check:');
 console.log('NODE_ENV:', process.env.NODE_ENV);
@@ -238,13 +243,14 @@ app.post('/api/admin/login', async (req, res) => {
 app.get('/api/products', async (req, res) => {
   try {
     if (mongoose.connection.readyState !== 1) {
-      return res.status(500).json({ error: 'Database not connected' });
+      console.log('Database not connected, returning empty array');
+      return res.json([]);
     }
     const products = await Product.find().sort({ createdAt: -1 });
     res.json(products);
   } catch (error) {
     console.error('Error fetching products:', error);
-    res.status(500).json({ error: 'Failed to fetch products' });
+    res.json([]);
   }
 });
 
@@ -380,13 +386,14 @@ app.delete('/api/admin/products/:id', authenticateToken, async (req, res) => {
 app.get('/api/combos', async (req, res) => {
   try {
     if (mongoose.connection.readyState !== 1) {
-      return res.status(500).json({ error: 'Database not connected' });
+      console.log('Database not connected, returning empty array');
+      return res.json([]);
     }
     const combos = await Combo.find().populate('products').sort({ createdAt: -1 });
     res.json(combos);
   } catch (error) {
     console.error('Error fetching combos:', error);
-    res.status(500).json({ error: 'Failed to fetch combos' });
+    res.json([]);
   }
 });
 
