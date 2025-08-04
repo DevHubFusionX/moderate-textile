@@ -207,9 +207,13 @@ app.post('/api/admin/login', async (req, res) => {
 // Get all products (public)
 app.get('/api/products', async (req, res) => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(500).json({ error: 'Database not connected' });
+    }
     const products = await Product.find().sort({ createdAt: -1 });
     res.json(products);
   } catch (error) {
+    console.error('Error fetching products:', error);
     res.status(500).json({ error: 'Failed to fetch products' });
   }
 });
@@ -345,9 +349,13 @@ app.delete('/api/admin/products/:id', authenticateToken, async (req, res) => {
 // Get all combos (public)
 app.get('/api/combos', async (req, res) => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(500).json({ error: 'Database not connected' });
+    }
     const combos = await Combo.find().populate('products').sort({ createdAt: -1 });
     res.json(combos);
   } catch (error) {
+    console.error('Error fetching combos:', error);
     res.status(500).json({ error: 'Failed to fetch combos' });
   }
 });
