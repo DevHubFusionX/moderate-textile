@@ -46,7 +46,12 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage });
 
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:5173', 'https://moderateustaz.vercel.app'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 
 // Admin user (in production, store in database)
