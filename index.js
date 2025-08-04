@@ -39,7 +39,7 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: 'moderate_ustaz_products',
+    folder: 'moderate_ustaz_products',   
     allowed_formats: ['jpg', 'jpeg', 'png', 'webp']
   }
 });
@@ -47,10 +47,11 @@ const storage = new CloudinaryStorage({
 const upload = multer({ storage });
 
 app.use(cors({
-  origin: true,
+  origin: ['https://moderate-textile.vercel.app', 'http://localhost:3000', 'http://localhost:5173'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar']
 }));
 app.use(express.json());
 
