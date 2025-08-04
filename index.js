@@ -17,21 +17,29 @@ const JWT_SECRET = process.env.JWT_SECRET || 'moderate_ustaz_secret_key_2024';
 // MongoDB connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://fanyanwu83:2gzYARFKvDE8DBvR@cluster0.nvozb5i.mongodb.net/moderate_ustaz?retryWrites=true&w=majority&appName=Cluster0';
 
-console.log('Attempting to connect to MongoDB...');
+console.log('Environment check:');
+console.log('NODE_ENV:', process.env.NODE_ENV);
 console.log('MONGODB_URI exists:', !!process.env.MONGODB_URI);
+console.log('MONGODB_URI length:', process.env.MONGODB_URI ? process.env.MONGODB_URI.length : 0);
+console.log('Using URI:', MONGODB_URI.substring(0, 20) + '...');
 
-mongoose.connect(MONGODB_URI, {
-  serverSelectionTimeoutMS: 5000,
-  socketTimeoutMS: 45000,
-})
-  .then(() => {
-    console.log('MongoDB connected successfully');
-    seedProducts();
+if (!MONGODB_URI || (!MONGODB_URI.startsWith('mongodb://') && !MONGODB_URI.startsWith('mongodb+srv://'))) {
+  console.error('Invalid MongoDB URI format');
+  console.log('Server running without database connection');
+} else {
+  mongoose.connect(MONGODB_URI, {
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 45000,
   })
-  .catch(err => {
-    console.error('MongoDB connection error:', err.message);
-    console.log('Server running without database connection');
-  });
+    .then(() => {
+      console.log('MongoDB connected successfully');
+      seedProducts();
+    })
+    .catch(err => {
+      console.error('MongoDB connection error:', err.message);
+      console.log('Server running without database connection');
+    });
+}
 
 // Cloudinary configuration
 cloudinary.config({
