@@ -15,16 +15,21 @@ const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || 'moderate_ustaz_secret_key_2024';
 
 // MongoDB connection
-mongoose.connect(process.env.MONGODB_URI, {
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://fanyanwu83:2gzYARFKvDE8DBvR@cluster0.nvozb5i.mongodb.net/moderate_ustaz?retryWrites=true&w=majority&appName=Cluster0';
+
+console.log('Attempting to connect to MongoDB...');
+console.log('MONGODB_URI exists:', !!process.env.MONGODB_URI);
+
+mongoose.connect(MONGODB_URI, {
   serverSelectionTimeoutMS: 5000,
   socketTimeoutMS: 45000,
 })
   .then(() => {
-    console.log('MongoDB connected');
+    console.log('MongoDB connected successfully');
     seedProducts();
   })
   .catch(err => {
-    console.error('MongoDB connection error:', err);
+    console.error('MongoDB connection error:', err.message);
     console.log('Server running without database connection');
   });
 
@@ -54,6 +59,23 @@ app.use(cors({
   exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar']
 }));
 app.use(express.json());
+
+// Health check endpoint
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Moderate Textile API is running',
+    status: 'ok',
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  });
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'ok',
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    timestamp: new Date().toISOString()
+  });
+});
 
 // Admin user (in production, store in database)
 const adminUser = {
