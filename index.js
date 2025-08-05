@@ -397,10 +397,38 @@ app.get('/api/combos', async (req, res) => {
   }
 });
 
+// Get single combo (public)
+app.get('/api/combos/:id', async (req, res) => {
+  try {
+    if (mongoose.connection.readyState !== 1) {
+      console.log('Database not connected, combo not found');
+      return res.status(404).json({ error: 'Combo not found' });
+    }
+    const combo = await Combo.findById(req.params.id).populate('products');
+    if (!combo) {
+      console.log('Combo not found in database:', req.params.id);
+      return res.status(404).json({ error: 'Combo not found' });
+    }
+    res.json(combo);
+  } catch (error) {
+    console.error('Error fetching combo:', error);
+    res.status(404).json({ error: 'Combo not found' });
+  }
+});
+
 // Add new combo (protected)
-app.post('/api/admin/combos', authenticateToken, upload.single('image'), async (req, res) => {
+app.post('/api/admin/combos', authenticateToken, upload.array('images', 10), async (req, res) => {
   try {
     const { name, description, products, originalPrice, comboPrice, savings, popular } = req.body;
+    
+    const images = req.files && req.files.length > 0 
+      ? req.files.map(file => file.path)
+      : ['https://via.placeholder.com/400x400'];
+    
+    const cloudinaryIds = req.files && req.files.length > 0
+      ? req.files.map(file => file.public_id)
+      : [];
+    
     const newCombo = new Combo({
       name,
       description,
@@ -408,8 +436,8 @@ app.post('/api/admin/combos', authenticateToken, upload.single('image'), async (
       originalPrice,
       comboPrice,
       savings,
-      image: req.file ? req.file.path : 'https://via.placeholder.com/400x400',
-      cloudinaryId: req.file ? req.file.public_id : null,
+      images,
+      cloudinaryIds,
       popular: popular === 'true'
     });
     
@@ -422,7 +450,7 @@ app.post('/api/admin/combos', authenticateToken, upload.single('image'), async (
 });
 
 // Update combo (protected)
-app.put('/api/admin/combos/:id', authenticateToken, upload.single('image'), async (req, res) => {
+app.put('/api/admin/combos/:id', authenticateToken, upload.array('images', 10), async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description, products, originalPrice, comboPrice, savings, popular } = req.body;
@@ -432,26 +460,33 @@ app.put('/api/admin/combos/:id', authenticateToken, upload.single('image'), asyn
       return res.status(404).json({ error: 'Combo not found' });
     }
     
-    if (req.file && combo.cloudinaryId) {
-      await cloudinary.uploader.destroy(combo.cloudinaryId);
+    let updateData = {
+      name: name || combo.name,
+      description: description || combo.description,
+      products: products ? JSON.parse(products) : combo.products,
+      originalPrice: originalPrice || combo.originalPrice,
+      comboPrice: comboPrice || combo.comboPrice,
+      savings: savings || combo.savings,
+      popular: popular !== undefined ? popular === 'true' : combo.popular
+    };
+    
+    // Handle new images if uploaded
+    if (req.files && req.files.length > 0) {
+      // Delete old images from cloudinary
+      if (combo.cloudinaryIds && combo.cloudinaryIds.length > 0) {
+        for (const id of combo.cloudinaryIds) {
+          await cloudinary.uploader.destroy(id);
+        }
+      }
+      
+      const newImages = req.files.map(file => file.path);
+      const newCloudinaryIds = req.files.map(file => file.public_id);
+      
+      updateData.images = newImages;
+      updateData.cloudinaryIds = newCloudinaryIds;
     }
     
-    const updatedCombo = await Combo.findByIdAndUpdate(
-      id,
-      {
-        name: name || combo.name,
-        description: description || combo.description,
-        products: products ? JSON.parse(products) : combo.products,
-        originalPrice: originalPrice || combo.originalPrice,
-        comboPrice: comboPrice || combo.comboPrice,
-        savings: savings || combo.savings,
-        image: req.file ? req.file.path : combo.image,
-        cloudinaryId: req.file ? req.file.public_id : combo.cloudinaryId,
-        popular: popular !== undefined ? popular === 'true' : combo.popular
-      },
-      { new: true }
-    ).populate('products');
-    
+    const updatedCombo = await Combo.findByIdAndUpdate(id, updateData, { new: true }).populate('products');
     res.json(updatedCombo);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update combo' });
@@ -468,8 +503,11 @@ app.delete('/api/admin/combos/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Combo not found' });
     }
     
-    if (combo.cloudinaryId) {
-      await cloudinary.uploader.destroy(combo.cloudinaryId);
+    // Delete all images from cloudinary
+    if (combo.cloudinaryIds && combo.cloudinaryIds.length > 0) {
+      for (const cloudinaryId of combo.cloudinaryIds) {
+        await cloudinary.uploader.destroy(cloudinaryId);
+      }
     }
     
     await Combo.findByIdAndDelete(id);

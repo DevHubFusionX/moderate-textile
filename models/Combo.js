@@ -27,13 +27,13 @@ const comboSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  image: {
+  images: [{
     type: String,
     required: true
-  },
-  cloudinaryId: {
+  }],
+  cloudinaryIds: [{
     type: String
-  },
+  }],
   popular: {
     type: Boolean,
     default: false
