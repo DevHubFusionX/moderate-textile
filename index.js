@@ -503,16 +503,25 @@ app.delete('/api/admin/combos/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Combo not found' });
     }
     
-    // Delete all images from cloudinary
-    if (combo.cloudinaryIds && combo.cloudinaryIds.length > 0) {
-      for (const cloudinaryId of combo.cloudinaryIds) {
-        await cloudinary.uploader.destroy(cloudinaryId);
+    // Delete images from cloudinary (handle both old and new structure)
+    try {
+      if (combo.cloudinaryIds && combo.cloudinaryIds.length > 0) {
+        for (const cloudinaryId of combo.cloudinaryIds) {
+          if (cloudinaryId) {
+            await cloudinary.uploader.destroy(cloudinaryId);
+          }
+        }
+      } else if (combo.cloudinaryId) {
+        await cloudinary.uploader.destroy(combo.cloudinaryId);
       }
+    } catch (cloudinaryError) {
+      console.log('Cloudinary deletion error (ignored):', cloudinaryError);
     }
     
     await Combo.findByIdAndDelete(id);
     res.json({ message: 'Combo deleted successfully' });
   } catch (error) {
+    console.error('Delete combo error:', error);
     res.status(500).json({ error: 'Failed to delete combo' });
   }
 });
