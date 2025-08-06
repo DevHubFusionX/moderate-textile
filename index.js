@@ -14,6 +14,11 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || 'moderate_ustaz_secret_key_2024';
 
+// Keep-alive service for free tier
+if (process.env.NODE_ENV === 'production') {
+  require('./keepAlive');
+}
+
 // MongoDB connection
 let MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://fanyanwu83:2gzYARFKvDE8DBvR@cluster0.nvozb5i.mongodb.net/moderate_ustaz?retryWrites=true&w=majority&appName=Cluster0';
 
