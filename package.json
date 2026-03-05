@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "node index.js",
-    "build": "echo 'No build step required'",
+    "start": "node init && node index.js",
+    "dev": "node init && node index.js",
+    "build": "node init && echo 'No build step required'",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "engines": {

@@ -25,8 +25,12 @@ connectDB().then((conn) => {
 });
 
 // Middleware
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',')
+  : ['https://moderate-textile.vercel.app', 'http://localhost:3000', 'http://localhost:5173', 'https://www.moderatestextile.com'];
+
 app.use(cors({
-  origin: ['https://moderate-textile.vercel.app', 'http://localhost:3000', 'http://localhost:5173'],
+  origin: allowedOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
